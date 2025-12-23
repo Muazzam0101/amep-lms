@@ -27,7 +27,7 @@ const Logo = ({ size = 'medium', clickable = false, className = '' }) => {
       onClick={clickable ? handleClick : undefined}
       style={{ cursor: clickable ? 'pointer' : 'default' }}
     >
-      AMEP
+      NeuroLearn
     </div>
   );
 
@@ -35,7 +35,7 @@ const Logo = ({ size = 'medium', clickable = false, className = '' }) => {
   // return (
   //   <img
   //     src={logoImage}
-  //     alt="AMEP - Adaptive Mastery & Engagement Platform"
+  //     alt="NeuroLearn - Adaptive Learning Platform"
   //     className={`logo ${sizeClasses[size]} ${clickable ? 'logo-clickable' : ''} ${className}`}
   //     onClick={clickable ? handleClick : undefined}
   //     style={{ cursor: clickable ? 'pointer' : 'default' }}

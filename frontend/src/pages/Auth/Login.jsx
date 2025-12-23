@@ -61,9 +61,9 @@ const Login = () => {
       <Toaster position="top-right" />
       
       <div className="auth-illustration">
-        <div className="auth-brand">AMEP</div>
+        <div className="auth-brand">NeuroLearn</div>
         <div className="auth-tagline">
-          Adaptive Mastery & Engagement Platform
+          Adaptive Learning Platform
         </div>
       </div>
       

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Button from '../../components/Button';
 import LogoutButton from '../../components/LogoutButton';
 import PdfViewer from '../../components/PdfViewer';
+import VideoLesson from './VideoLesson';
+import StudentLearningPage from './StudentLearningPage';
 import { useContent } from '../../context/ContentContext';
 import { useCourse } from '../../context/CourseContext';
 import './Student.css';
@@ -10,6 +12,9 @@ const StudentDashboard = () => {
   const { getValidContents } = useContent();
   const { courses } = useCourse();
   const [selectedPdf, setSelectedPdf] = useState(null);
+  const [showVideoLesson, setShowVideoLesson] = useState(false);
+  const [showLearningPage, setShowLearningPage] = useState(false);
+  const [selectedContentId, setSelectedContentId] = useState(null);
   
   // Mock data for student learning status
   const studentData = {
@@ -30,10 +35,35 @@ const StudentDashboard = () => {
 
   const handleStartPractice = () => {
     console.log("Starting practice for:", studentData.recommended_topic.name);
+    setSelectedContentId("content_001");
+    setShowLearningPage(true);
   };
 
   const handleRevisionClick = (topic) => {
     console.log("Starting revision for:", topic.name);
+    
+    // Map topics to content IDs
+    const topicContentMap = {
+      "Quadratic Functions": "content_002",
+      "Probability Basics": "content_001", // Fallback to Linear Equations
+      "Geometric Proofs": "content_001" // Fallback to Linear Equations
+    };
+    
+    const contentId = topicContentMap[topic.name] || "content_001";
+    console.log('Opening content ID:', contentId, 'for topic:', topic.name);
+    
+    setSelectedContentId(contentId);
+    setShowLearningPage(true);
+  };
+
+  const handleBackToDashboard = () => {
+    setShowLearningPage(false);
+    setShowVideoLesson(false);
+    setSelectedContentId(null);
+  };
+
+  const handleCloseVideoLesson = () => {
+    setShowVideoLesson(false);
   };
 
   const handleOpenPdf = (content) => {
@@ -59,6 +89,16 @@ const StudentDashboard = () => {
   const getUrgencyClass = (urgency) => {
     return `revision-urgency-${urgency}`;
   };
+
+  // Show learning page if selected
+  if (showLearningPage) {
+    return (
+      <StudentLearningPage 
+        contentId={selectedContentId}
+        onBack={handleBackToDashboard}
+      />
+    );
+  }
 
   return (
     <div className="student-container page-fade-in">
@@ -180,6 +220,27 @@ const StudentDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Video Lesson Modal */}
+      {showVideoLesson && (
+        <div className="modal-overlay">
+          <div className="video-lesson-modal">
+            <div className="video-lesson-header">
+              <h3>Video Lesson: {studentData.recommended_topic.name}</h3>
+              <button onClick={handleCloseVideoLesson} className="close-btn">
+                ✕
+              </button>
+            </div>
+            <VideoLesson 
+              lesson={{
+                title: studentData.recommended_topic.name,
+                description: studentData.recommended_topic.description,
+                videoUrl: "/api/placeholder/video" // Mock video URL
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* PDF Viewer Modal */}
       {selectedPdf && (
