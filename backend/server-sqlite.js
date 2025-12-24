@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration for production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://neurolearn.vercel.app', 'https://amep-frontend.vercel.app']
+    ? ['https://neurolearn.vercel.app', 'https://amep-frontend.vercel.app', 'https://neurolearn-amep.vercel.app']
     : ['http://localhost:3000'],
   credentials: true
 }));
