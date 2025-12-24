@@ -44,15 +44,10 @@ const Signup = () => {
     
     if (!validateForm()) return;
     
-    if (!hydrated) {
-      toast.error('Authentication system is loading. Please wait.');
-      return;
-    }
-    
     setLoading(true);
 
     try {
-      const user = signup(formData.email, formData.password, formData.role);
+      const user = await signup(formData.email, formData.password, formData.role);
       
       toast.success('Account created successfully!');
       
@@ -121,8 +116,8 @@ const Signup = () => {
             />
           </div>
 
-          <Button type="submit" loading={loading} disabled={!hydrated}>
-            {!hydrated ? 'Loading...' : 'Create Account'}
+          <Button type="submit" loading={loading}>
+            Create Account
           </Button>
 
           <div className="auth-link">

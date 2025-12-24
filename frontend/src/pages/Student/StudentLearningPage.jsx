@@ -3,6 +3,7 @@ import YouTubeVideoPlayer from '../../components/YouTubeVideoPlayer';
 import VideoLesson from './VideoLesson';
 import PdfViewer from '../../components/PdfViewer';
 import Button from '../../components/Button';
+import ThemeToggle from '../../components/ThemeToggle';
 import './Student.css';
 
 const StudentLearningPage = ({ contentId, onBack }) => {
@@ -10,19 +11,15 @@ const StudentLearningPage = ({ contentId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [selectedPdf, setSelectedPdf] = useState(null);
 
-  // Mock content data - in real app, fetch from API
+  // Mock content data
   useEffect(() => {
-    console.log('Loading content for ID:', contentId);
-    
-    // Simulate API call with different content based on contentId
     setTimeout(() => {
-      // Mock content database
       const contentDatabase = {
         "content_001": {
           content_id: "content_001",
           title: "Linear Equations - Complete Guide",
           description: "Master linear equations with step-by-step video explanations and practice materials",
-          youtube_url: "https://www.youtube.com/watch?v=WUvTyaaNkzM", // Khan Academy - embeddable
+          youtube_url: "https://www.youtube.com/watch?v=WUvTyaaNkzM",
           pdf_data: "/api/placeholder/pdf",
           difficulty: "Medium",
           estimated_time: 25,
@@ -33,7 +30,7 @@ const StudentLearningPage = ({ contentId, onBack }) => {
           content_id: "content_002",
           title: "Quadratic Functions",
           description: "Learn about parabolas, vertex form, and solving quadratic equations",
-          youtube_url: "https://www.youtube.com/watch?v=9vNhP6MBnig", // Khan Academy - embeddable
+          youtube_url: "https://www.youtube.com/watch?v=9vNhP6MBnig",
           pdf_data: "/api/placeholder/pdf",
           difficulty: "Hard",
           estimated_time: 30,
@@ -44,7 +41,7 @@ const StudentLearningPage = ({ contentId, onBack }) => {
           content_id: "content_003",
           title: "Basic HTML Structure",
           description: "Introduction to HTML tags and document structure",
-          youtube_url: "https://www.youtube.com/watch?v=UB1O30fR-EE", // freeCodeCamp - embeddable
+          youtube_url: "https://www.youtube.com/watch?v=UB1O30fR-EE",
           pdf_data: "/api/placeholder/pdf",
           difficulty: "Easy",
           estimated_time: 20,
@@ -54,9 +51,6 @@ const StudentLearningPage = ({ contentId, onBack }) => {
       };
       
       const selectedContent = contentDatabase[contentId] || contentDatabase["content_001"];
-      console.log('Selected content:', selectedContent);
-      console.log('YouTube URL:', selectedContent.youtube_url);
-      
       setContent(selectedContent);
       setLoading(false);
     }, 1000);
@@ -74,19 +68,19 @@ const StudentLearningPage = ({ contentId, onBack }) => {
 
   if (loading) {
     return (
-      <div className="learning-page-loading">
+      <div className="loading-state">
         <div className="loading-spinner"></div>
-        <p>Loading learning content...</p>
+        <p>Loading lesson...</p>
       </div>
     );
   }
 
   if (!content) {
     return (
-      <div className="learning-page-error">
-        <h3>Content Not Found</h3>
-        <p>The requested learning content could not be loaded.</p>
-        <Button onClick={onBack} className="glass-button primary">
+      <div className="error-state">
+        <h3>Lesson Not Found</h3>
+        <p>The requested lesson could not be loaded.</p>
+        <Button onClick={onBack} className="btn-primary">
           Back to Dashboard
         </Button>
       </div>
@@ -96,82 +90,98 @@ const StudentLearningPage = ({ contentId, onBack }) => {
   const hasYouTubeVideo = content.youtube_url && content.youtube_url.includes('youtube.com');
 
   return (
-    <div className="student-learning-page">
-      {/* Header */}
-      <div className="learning-header">
-        <button onClick={onBack} className="back-btn">
+    <div className="lesson-page">
+      {/* Navigation */}
+      <div className="lesson-nav">
+        <button onClick={onBack} className="back-button">
           ← Back to Dashboard
         </button>
-        <div className="content-info">
-          <h1>{content.title}</h1>
-          <p>{content.description}</p>
-          <div className="content-meta">
-            <span className={`difficulty-badge difficulty-${content.difficulty.toLowerCase()}`}>
-              {content.difficulty}
-            </span>
-            <span className="time-estimate">⏱️ {content.estimated_time} min</span>
-            <span className="course-name">📚 {content.course}</span>
-          </div>
-        </div>
+        <ThemeToggle />
       </div>
 
-      {/* Main Content */}
-      <div className="learning-content">
-        {/* Video Section */}
-        {hasYouTubeVideo ? (
-          <div className="video-section">
-            <YouTubeVideoPlayer content={content} />
-          </div>
-        ) : (
-          <div className="video-section">
-            <VideoLesson 
-              lesson={{
-                title: content.title,
-                description: content.description,
-                videoUrl: "/api/placeholder/video" // Fallback video
-              }}
-            />
-          </div>
-        )}
+      {/* 12-Column Grid Layout */}
+      <div className="lesson-grid">
+        {/* Main Content Area - 8 Columns */}
+        <main className="lesson-main">
+          {/* Lesson Header */}
+          <header className="lesson-header">
+            <h1 className="lesson-title">{content.title}</h1>
+            <p className="lesson-subtitle">{content.description}</p>
+            <div className="lesson-meta">
+              <span className={`difficulty-chip difficulty-${content.difficulty.toLowerCase()}`}>
+                {content.difficulty}
+              </span>
+              <span className="duration-chip">
+                ⏱️ {content.estimated_time} min
+              </span>
+            </div>
+          </header>
 
-        {/* Additional Resources */}
-        <div className="resources-section">
-          <h3>Additional Resources</h3>
-          
-          {/* PDF Materials */}
-          {content.pdf_data && (
-            <div className="resource-card">
-              <div className="resource-info">
-                <h4>📄 Study Materials</h4>
-                <p>Comprehensive notes and examples for this topic</p>
+          {/* Video Card */}
+          <section className="video-section">
+            {hasYouTubeVideo ? (
+              <YouTubeVideoPlayer content={content} />
+            ) : (
+              <VideoLesson 
+                lesson={{
+                  title: content.title,
+                  description: content.description,
+                  videoUrl: "/api/placeholder/video"
+                }}
+              />
+            )}
+          </section>
+        </main>
+
+        {/* Right Sidebar - 4 Columns */}
+        <aside className="lesson-sidebar">
+          <div className="sidebar-content">
+            <h2 className="sidebar-title">Study Resources</h2>
+            
+            {/* Study Materials Card */}
+            {content.pdf_data && (
+              <div className="resource-card">
+                <div className="resource-header">
+                  <div className="resource-icon">📄</div>
+                  <h3>Study Materials</h3>
+                </div>
+                <p className="resource-description">
+                  Comprehensive notes and practice problems for this lesson.
+                </p>
+                <Button onClick={handleOpenPdf} className="resource-cta">
+                  Open Materials
+                </Button>
               </div>
-              <Button onClick={handleOpenPdf} className="glass-button primary">
-                Open PDF
+            )}
+
+            {/* Teacher Notes Card */}
+            {content.teacher_notes && (
+              <div className="resource-card teacher-notes">
+                <div className="resource-header">
+                  <div className="resource-icon">👨‍🏫</div>
+                  <h3>Teacher Notes</h3>
+                </div>
+                <p className="resource-description">
+                  {content.teacher_notes}
+                </p>
+              </div>
+            )}
+
+            {/* Practice Quiz Card */}
+            <div className="resource-card">
+              <div className="resource-header">
+                <div className="resource-icon">🎯</div>
+                <h3>Practice Quiz</h3>
+              </div>
+              <p className="resource-description">
+                Test your understanding with interactive questions.
+              </p>
+              <Button className="resource-cta secondary">
+                Start Quiz
               </Button>
             </div>
-          )}
-
-          {/* Teacher Notes */}
-          {content.teacher_notes && (
-            <div className="resource-card teacher-notes">
-              <div className="resource-info">
-                <h4>👨‍🏫 Teacher Notes</h4>
-                <p>{content.teacher_notes}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Practice Section */}
-          <div className="resource-card">
-            <div className="resource-info">
-              <h4>🎯 Practice Quiz</h4>
-              <p>Test your understanding with interactive questions</p>
-            </div>
-            <Button className="glass-button secondary">
-              Start Quiz
-            </Button>
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* PDF Viewer Modal */}

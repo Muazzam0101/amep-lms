@@ -7,14 +7,10 @@ const YouTubeVideoPlayer = ({ content }) => {
   const [duration, setDuration] = useState(0);
   const [useIframeEmbed, setUseIframeEmbed] = useState(false);
   const [apiLoadError, setApiLoadError] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const [helpContent, setHelpContent] = useState(null);
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
   const [showCameraPrompt, setShowCameraPrompt] = useState(false);
   const [webcamActive, setWebcamActive] = useState(false);
   const [webcamError, setWebcamError] = useState(null);
-  const [isCalibrating, setIsCalibrating] = useState(false);
-  const [baseline, setBaseline] = useState(null);
   const [confusionDetected, setConfusionDetected] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [suppressedTimestamps, setSuppressedTimestamps] = useState(new Set());
@@ -24,7 +20,6 @@ const YouTubeVideoPlayer = ({ content }) => {
   const streamRef = useRef(null);
   const timeUpdateInterval = useRef(null);
   const detectionIntervalRef = useRef(null);
-  const confusionFramesRef = useRef([]);
 
   // Extract YouTube video ID
   const extractVideoId = (url) => {
@@ -54,7 +49,7 @@ const YouTubeVideoPlayer = ({ content }) => {
 
       try {
         const newPlayer = new window.YT.Player(playerRef.current, {
-          height: '400',
+          height: '100%',
           width: '100%',
           videoId: videoId,
           playerVars: {
@@ -137,15 +132,22 @@ const YouTubeVideoPlayer = ({ content }) => {
       streamRef.current = stream;
       setWebcamActive(true);
       
-      await new Promise(resolve => setTimeout(resolve, 50));
+      setTimeout(() => {
+        if (webcamRef.current && streamRef.current) {
+          webcamRef.current.srcObject = streamRef.current;
+          webcamRef.current.addEventListener('loadedmetadata', () => {
+            webcamRef.current.play().catch(err => {
+              console.error('Video play failed:', err);
+            });
+          }, { once: true });
+        }
+      }, 100);
       
-      if (webcamRef.current) {
-        webcamRef.current.srcObject = stream;
-        await webcamRef.current.play();
-      }
+      startVideoPlayback();
+      startConfusionDetection();
       
-      startCalibration();
     } catch (error) {
+      console.error('Camera setup failed:', error);
       setWebcamError(`Camera error: ${error.message}`);
       startVideoPlayback();
     }
@@ -160,71 +162,33 @@ const YouTubeVideoPlayer = ({ content }) => {
     }
   };
 
-  const startCalibration = () => {
-    setIsCalibrating(true);
+  const startConfusionDetection = () => {
+    // Auto-trigger modal after 10 seconds for testing
     setTimeout(() => {
-      setBaseline({
-        eyebrowHeight: Math.random() * 10 + 15,
-        eyeOpenness: Math.random() * 5 + 8,
-        headTilt: Math.random() * 10 - 5
-      });
-      setIsCalibrating(false);
-      startVideoPlayback();
-      startConfusionDetection();
-    }, 5000);
+      if (isPlaying && !showHelpModal) {
+        handleConfusionConfirmed();
+      }
+    }, 10000);
+    
+    detectionIntervalRef.current = setInterval(() => {
+      if (isPlaying && !confusionDetected) {
+        // Detection logic would go here
+      }
+    }, 500);
   };
 
-  const analyzeFacialLandmarks = () => {
-    if (!webcamRef.current || !baseline) return null;
-    
-    const mockAnalysis = {
-      eyebrowHeight: baseline.eyebrowHeight + (Math.random() - 0.5) * 8,
-      eyeOpenness: baseline.eyeOpenness + (Math.random() - 0.5) * 4,
-      headTilt: baseline.headTilt + (Math.random() - 0.5) * 12
-    };
-    
-    const eyebrowDeviation = Math.abs(mockAnalysis.eyebrowHeight - baseline.eyebrowHeight);
-    const eyeDeviation = Math.abs(mockAnalysis.eyeOpenness - baseline.eyeOpenness);
-    const headDeviation = Math.abs(mockAnalysis.headTilt - baseline.headTilt);
-    
-    const isConfused = (
-      eyebrowDeviation > 3 ||
-      eyeDeviation > 2 ||
-      headDeviation > 6
-    );
-    
-    return { isConfused, timestamp: Date.now() };
-  };
-  
-  const checkSustainedConfusion = () => {
-    const analysis = analyzeFacialLandmarks();
-    if (!analysis) return;
-    
-    confusionFramesRef.current = [...confusionFramesRef.current, analysis].slice(-15);
-    
-    const recentConfused = confusionFramesRef.current.filter(f => f.isConfused && Date.now() - f.timestamp < 5000);
-    const confusionRatio = recentConfused.length / Math.min(confusionFramesRef.current.length, 10);
-    
-    if (confusionRatio > 0.6 && !confusionDetected && isPlaying) {
-      handleSustainedConfusion();
-    }
-  };
-  
-  const handleSustainedConfusion = () => {
+  const handleConfusionConfirmed = () => {
     const timestampKey = Math.floor(currentTime / 30) * 30;
-    if (suppressedTimestamps.has(timestampKey)) return;
+    
+    if (suppressedTimestamps.has(timestampKey)) {
+      return;
+    }
     
     setConfusionDetected(true);
-    if (player) player.pauseVideo();
+    if (player) {
+      player.pauseVideo();
+    }
     setShowHelpModal(true);
-  };
-
-  const startConfusionDetection = () => {
-    detectionIntervalRef.current = setInterval(() => {
-      if (isPlaying && baseline && webcamActive) {
-        checkSustainedConfusion();
-      }
-    }, 300);
   };
 
   const stopWebcam = () => {
@@ -239,8 +203,7 @@ const YouTubeVideoPlayer = ({ content }) => {
     }
     
     setWebcamActive(false);
-    setBaseline(null);
-    setIsCalibrating(false);
+    setConfusionDetected(false);
   };
 
   const startTimeTracking = () => {
@@ -267,9 +230,13 @@ const YouTubeVideoPlayer = ({ content }) => {
   const handleSkipHelp = () => {
     const timestampKey = Math.floor(currentTime / 30) * 30;
     setSuppressedTimestamps(prev => new Set([...prev, timestampKey]));
+    
     setShowHelpModal(false);
     setConfusionDetected(false);
-    if (player) player.playVideo();
+    
+    if (player) {
+      player.playVideo();
+    }
   };
 
   useEffect(() => {
@@ -287,7 +254,7 @@ const YouTubeVideoPlayer = ({ content }) => {
 
   if (!videoId) {
     return (
-      <div className="video-error">
+      <div className="video-error-card">
         <h3>Video Not Available</h3>
         <p>No valid YouTube URL provided.</p>
       </div>
@@ -295,112 +262,117 @@ const YouTubeVideoPlayer = ({ content }) => {
   }
 
   return (
-    <div className="youtube-video-container">
-      <div className="video-header">
-        <h2>{content?.title || "Video Lesson"}</h2>
-        <p>{content?.description || "Watch and learn with AI assistance"}</p>
-      </div>
-
-      <div className="video-player-wrapper">
-        {useIframeEmbed || apiLoadError ? (
-          <iframe
-            className="youtube-player"
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
-            title={content?.title || "YouTube Video"}
-            frameBorder="0"
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <div ref={playerRef} className="youtube-player"></div>
-        )}
-
-        {showPlayOverlay && (
-          <div className="play-overlay">
-            <button onClick={handlePlayClick} className="play-button">
-              ▶️ Play Video
-            </button>
-          </div>
-        )}
-
-        {showCameraPrompt && (
-          <div className="modal-overlay">
-            <div className="camera-prompt-modal">
-              <h3>Enable camera-assisted learning?</h3>
-              <p>This helps detect confusion during the video.</p>
-              <p><strong>No video is stored.</strong></p>
-              <div className="prompt-actions">
-                <button onClick={() => handleCameraDecision(true)} className="btn-enable-camera">
-                  📹 Enable Camera
-                </button>
-                <button onClick={() => handleCameraDecision(false)} className="btn-skip-camera">
-                  Skip Camera
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {webcamActive && (
-          <div className="webcam-preview">
-            <video 
-              ref={webcamRef} 
-              autoPlay 
-              muted 
-              playsInline
-              className="webcam-video"
-              style={{
-                width: '160px',
-                height: '120px',
-                objectFit: 'cover',
-                border: '2px solid #00ff00',
-                borderRadius: '8px',
-                zIndex: 1000
-              }}
-            />
-            <div className="webcam-status">
-              {isCalibrating ? (
-                <span className="calibrating">Calibrating... (5s)</span>
-              ) : (
-                <span className="active">🟢 Camera Active</span>
-              )}
-            </div>
-            <button onClick={stopWebcam} className="stop-webcam">✕</button>
-          </div>
-        )}
-
-        {webcamError && (
-          <div className="webcam-error">
-            <p>❌ {webcamError}</p>
-          </div>
-        )}
-      </div>
-
-      <div className="video-info">
-        <div className="video-controls">
-          <span className="time-display">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
-        </div>
-      </div>
-
-      {showHelpModal && (
-        <div className="modal-overlay">
-          <div className="help-modal">
-            <h3>Looks like this part is challenging.</h3>
-            <p>Want a quick explanation or example?</p>
-            <div className="help-actions">
-              <button onClick={handleAcceptHelp} className="btn-accept">
-                Yes, help me
+    <>
+      {/* GLOBAL MODALS - App Root Level */}
+      {showCameraPrompt && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h3>Enable AI Learning Assistant?</h3>
+            <p>This helps detect when you might need extra help during the lesson.</p>
+            <p className="privacy-note">Your video stays private and is never stored.</p>
+            <div className="modal-actions">
+              <button 
+                onClick={() => handleCameraDecision(true)} 
+                className="btn-primary"
+              >
+                📹 Enable Camera
               </button>
-              <button onClick={handleSkipHelp} className="btn-skip">
-                Continue video
+              <button 
+                onClick={() => handleCameraDecision(false)} 
+                className="btn-secondary"
+              >
+                Skip Camera
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {showHelpModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h3>Need some help with this part?</h3>
+            <p>I noticed you might be having trouble. Would you like a quick explanation?</p>
+            <div className="modal-actions">
+              <button 
+                onClick={handleAcceptHelp} 
+                className="btn-primary"
+              >
+                Yes, help me
+              </button>
+              <button 
+                onClick={handleSkipHelp} 
+                className="btn-secondary"
+              >
+                Continue lesson
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIDEO CARD - Clean Structure */}
+      <div className="video-card">
+        <div className="video-container">
+          {useIframeEmbed || apiLoadError ? (
+            <iframe
+              className="video-player"
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+              title={content?.title || "Video Lesson"}
+              frameBorder="0"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div ref={playerRef} className="video-player"></div>
+          )}
+
+          {showPlayOverlay && (
+            <div className="play-overlay">
+              <button onClick={handlePlayClick} className="play-button">
+                ▶️ Start Lesson
+              </button>
+            </div>
+          )}
+
+          {/* Webcam PiP - Fixed Position */}
+          {webcamActive && (
+            <div className="webcam-pip">
+              <video 
+                ref={webcamRef} 
+                autoPlay
+                muted
+                playsInline
+                className="webcam-video"
+              />
+              <div className="webcam-indicator">
+                <span>🟢 AI Assistant</span>
+              </div>
+              <button onClick={stopWebcam} className="webcam-close">×</button>
+            </div>
+          )}
+
+          {webcamError && (
+            <div className="webcam-error">
+              <p>Camera unavailable: {webcamError}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Playback Controls */}
+        <div className="video-controls">
+          <div className="time-info">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+          <button 
+            onClick={() => setShowHelpModal(true)}
+            className="help-button"
+          >
+            Need Help?
+          </button>
+        </div>
+      </div>
+    </>
   );
 };
 

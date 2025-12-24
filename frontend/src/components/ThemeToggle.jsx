@@ -5,17 +5,18 @@ const ThemeToggle = () => {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDark(savedTheme === 'dark');
-      document.documentElement.className = savedTheme === 'dark' ? '' : 'light-theme';
-    }
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
+    setIsDark(theme === 'dark');
+    document.documentElement.className = theme === 'light' ? 'light-theme' : '';
   }, []);
 
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark';
     setIsDark(!isDark);
     localStorage.setItem('theme', newTheme);
-    document.documentElement.className = newTheme === 'dark' ? '' : 'light-theme';
+    document.documentElement.className = newTheme === 'light' ? 'light-theme' : '';
   };
 
   return (

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -11,111 +12,67 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Initialize state directly from localStorage
-  const [studentsTable, setStudentsTable] = useState(() => {
-    return JSON.parse(localStorage.getItem('students_table')) || [];
-  });
-  
-  const [teachersTable, setTeachersTable] = useState(() => {
-    return JSON.parse(localStorage.getItem('teachers_table')) || [];
-  });
-  
   const [currentUser, setCurrentUser] = useState(() => {
-    return JSON.parse(localStorage.getItem('current_user_session')) || null;
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('current_user');
+    return token && user ? JSON.parse(user) : null;
   });
   
-  const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(true);
 
-  // Set hydrated after initial state is loaded
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
-  // Save tables to localStorage whenever they change
-  useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem('students_table', JSON.stringify(studentsTable));
+  const signup = async (email, password, role) => {
+    setLoading(true);
+    try {
+      const response = await authAPI.signup({ email, password, role });
+      const { token, user } = response.data;
+      
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('current_user', JSON.stringify(user));
+      setCurrentUser(user);
+      
+      return user;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Signup failed';
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
-  }, [studentsTable, hydrated]);
-
-  useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem('teachers_table', JSON.stringify(teachersTable));
-    }
-  }, [teachersTable, hydrated]);
-
-  useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem('current_user_session', JSON.stringify(currentUser));
-    }
-  }, [currentUser, hydrated]);
-
-  const signup = (email, password, role) => {
-    if (!hydrated) {
-      throw new Error('Authentication system is loading. Please wait.');
-    }
-
-    const table = role === 'student' ? studentsTable : teachersTable;
-    const setTable = role === 'student' ? setStudentsTable : setTeachersTable;
-
-    // Check if email already exists in the selected role table
-    if (table.find(user => user.email === email)) {
-      throw new Error('An account with this email already exists for the selected role');
-    }
-
-    const newUser = {
-      [role === 'student' ? 'student_id' : 'teacher_id']: Date.now().toString(),
-      email,
-      password,
-      role
-    };
-
-    const updatedTable = [...table, newUser];
-    setTable(updatedTable);
-    
-    // Immediately sync to localStorage
-    localStorage.setItem(role === 'student' ? 'students_table' : 'teachers_table', JSON.stringify(updatedTable));
-    
-    return newUser;
   };
 
-  const login = (email, password, role) => {
-    if (!hydrated) {
-      throw new Error('Authentication system is loading. Please wait.');
+  const login = async (email, password, role) => {
+    setLoading(true);
+    try {
+      const response = await authAPI.login({ email, password });
+      const { token, user } = response.data;
+      
+      // Verify role matches
+      if (user.role !== role) {
+        throw new Error('Invalid credentials for selected role');
+      }
+      
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('current_user', JSON.stringify(user));
+      setCurrentUser(user);
+      
+      return user;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Login failed';
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
-
-    const table = role === 'student' ? studentsTable : teachersTable;
-
-    // Check if email exists in the selected role table
-    const user = table.find(u => u.email === email);
-    
-    if (!user) {
-      throw new Error('No account exists for the selected role');
-    }
-
-    // Check password
-    if (user.password !== password) {
-      throw new Error('Invalid credentials');
-    }
-
-    setCurrentUser(user);
-    localStorage.setItem('current_user_session', JSON.stringify(user));
-    
-    return user;
   };
 
   const logout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('current_user');
     setCurrentUser(null);
-    localStorage.removeItem('current_user_session');
   };
 
   const clearAllData = () => {
-    setCurrentUser(null);
-    setStudentsTable([]);
-    setTeachersTable([]);
-    localStorage.removeItem('students_table');
-    localStorage.removeItem('teachers_table');
-    localStorage.removeItem('current_user_session');
+    logout();
+    // Remove any other app-specific data
     localStorage.removeItem('amep_courses');
     localStorage.removeItem('amep_topics');
     localStorage.removeItem('contents_table');
@@ -127,9 +84,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     clearAllData,
-    studentsTable,
-    teachersTable,
-    hydrated
+    loading,
+    hydrated: true
   };
 
   return (

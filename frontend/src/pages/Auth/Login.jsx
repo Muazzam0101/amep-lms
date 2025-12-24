@@ -29,15 +29,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!hydrated) {
-      toast.error('Authentication system is loading. Please wait.');
-      return;
-    }
-    
     setLoading(true);
 
     try {
-      const user = login(formData.email, formData.password, formData.role);
+      const user = await login(formData.email, formData.password, formData.role);
       
       toast.success('Login successful!');
       
@@ -101,8 +96,8 @@ const Login = () => {
             />
           </div>
 
-          <Button type="submit" loading={loading} disabled={!hydrated}>
-            {!hydrated ? 'Loading...' : 'Sign In'}
+          <Button type="submit" loading={loading}>
+            Sign In
           </Button>
 
           <div className="auth-link">
