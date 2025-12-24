@@ -6,26 +6,23 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Manual CORS headers middleware (fallback)
-app.use((req, res, next) => {
+// 1️⃣ GLOBAL CORS MIDDLEWARE - MUST BE FIRST
+app.use(cors({
+  origin: 'https://neurolearn-amep.vercel.app', // 2️⃣ EXPLICIT ORIGIN - NO WILDCARDS
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 4️⃣ REQUIRED METHODS
+  allowedHeaders: ['Content-Type', 'Authorization'], // 5️⃣ REQUIRED HEADERS
+  credentials: true,
+  optionsSuccessStatus: 200 // 3️⃣ PREFLIGHT SUCCESS STATUS
+}));
+
+// 3️⃣ EXPLICIT PREFLIGHT HANDLER (CRITICAL)
+app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', 'https://neurolearn-amep.vercel.app');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
+  res.sendStatus(200); // HTTP 200 for OPTIONS
 });
-
-// CORS middleware (backup)
-app.use(cors({
-  origin: 'https://neurolearn-amep.vercel.app',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 app.use(express.json());
 
