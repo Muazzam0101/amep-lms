@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Logo Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            transition: all 0.3s ease;
+        }
+        .light-theme { 
+            background: #f8fafc; 
+            color: #0f172a; 
+        }
+        .dark-theme { 
+            background: #0a0a0f; 
+            color: #f8fafc; 
+        }
+        .logo { 
+            height: 64px; 
+            margin: 20px 0; 
+            display: block;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 10px; 
+            cursor: pointer; 
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <h1>Theme-Aware Logo Test</h1>
+    <p>Current theme: <span id="theme-status">Dark</span></p>
+    
+    <img id="logo" class="logo" src="./src/assests/logo/edtechlogo.png" alt="Logo">
+    
+    <div>
+        <button onclick="setDarkTheme()">Dark Theme</button>
+        <button onclick="setLightTheme()">Light Theme</button>
+    </div>
+    
+    <script>
+        function updateLogo() {
+            const isLight = document.body.classList.contains('light-theme');
+            const logo = document.getElementById('logo');
+            const status = document.getElementById('theme-status');
+            
+            if (isLight) {
+                logo.src = './src/assests/edtechlogosolid.png';
+                status.textContent = 'Light';
+            } else {
+                logo.src = './src/assests/logo/edtechlogo.png';
+                status.textContent = 'Dark';
+            }
+        }
+        
+        function setDarkTheme() {
+            document.body.className = 'dark-theme';
+            updateLogo();
+        }
+        
+        function setLightTheme() {
+            document.body.className = 'light-theme';
+            updateLogo();
+        }
+        
+        // Initial setup
+        updateLogo();
+    </script>
+</body>
+</html>
