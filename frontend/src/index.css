@@ -483,7 +483,8 @@ button {
   display: block;
   object-fit: contain;
   transition: all var(--transition-fast);
-  filter: drop-shadow(0 4px 12px rgba(6, 182, 212, 0.2));
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .logo-small, .logo-placeholder.logo-small {
@@ -511,9 +512,9 @@ button {
 }
 
 .logo-clickable:hover, .logo-placeholder.logo-clickable:hover {
-  opacity: 0.8;
+  opacity: 1 !important;
   transform: scale(1.05);
-  filter: drop-shadow(0 6px 16px rgba(6, 182, 212, 0.3));
+  filter: none !important;
 }
 
 /* Header Logo Styles */
@@ -526,22 +527,26 @@ button {
 /* Auth Brand Logo */
 .auth-brand-logo {
   margin-bottom: var(--space-lg);
-  filter: drop-shadow(0 8px 20px rgba(6, 182, 212, 0.25));
+  opacity: 1 !important;
+  filter: none !important;
 }
 
-/* Light theme adjustments - CRITICAL for visibility */
+/* Light theme - NO visual effects, full opacity */
 .light-theme .logo,
 .light-theme .logo-placeholder {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 4px rgba(6, 182, 212, 0.2));
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .light-theme .logo-clickable:hover,
 .light-theme .logo-placeholder.logo-clickable:hover {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 8px rgba(6, 182, 212, 0.3));
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .light-theme .auth-brand-logo {
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 12px rgba(6, 182, 212, 0.25));
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 @media (max-width: 768px) {
