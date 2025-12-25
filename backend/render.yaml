@@ -1,9 +1,8 @@
-services:
-  - type: pserv
-    name: neurolearn-postgres
-    env: postgres
+databases:
+  - name: neurolearn-postgres
     plan: free
-    
+
+services:
   - type: web
     name: neurolearn-backend
     env: node
@@ -14,8 +13,3 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: neurolearn-postgres
-          property: connectionString
