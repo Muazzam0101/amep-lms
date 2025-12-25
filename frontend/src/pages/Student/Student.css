@@ -28,8 +28,6 @@
   background: var(--bg-primary);
   padding: var(--space-xl);
   position: relative;
-  /* TEMPORARY DEBUG - Remove after confirming CSS loads */
-  border: 3px solid red;
 }
 
 .dashboard-header {
