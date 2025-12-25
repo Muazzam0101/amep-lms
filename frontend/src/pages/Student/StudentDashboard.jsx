@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '../../components/Button';
+import Logo from '../../components/Logo';
 import LogoutButton from '../../components/LogoutButton';
 import PdfViewer from '../../components/PdfViewer';
 import VideoLesson from './VideoLesson';
@@ -103,6 +104,7 @@ const StudentDashboard = () => {
   return (
     <div className="student-container page-fade-in">
       <div className="dashboard-header">
+        <Logo size="small" clickable className="header-logo" />
         <div className="student-header">
           <h1 className="student-title">Welcome back, {studentData.name}</h1>
           <p className="student-subtitle">Here's your learning overview for today</p>

@@ -111,6 +111,9 @@
 .auth-header {
   text-align: center;
   margin-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .auth-title {
