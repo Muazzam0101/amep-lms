@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logoImage from '../assests/logo/edtechlogo.jpg';
+import logoImage from '../assests/logo/neurolearn-logo.svg';
 
 const Logo = ({ size = 'medium', clickable = false, className = '' }) => {
   const navigate = useNavigate();
