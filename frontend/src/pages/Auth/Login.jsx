@@ -103,6 +103,16 @@ const Login = () => {
             Sign In
           </Button>
 
+          {/* Loading Overlay for Extra Visibility */}
+          {loading && (
+            <div className="auth-loading-overlay">
+              <div className="auth-loading-content">
+                <div className="auth-loading-spinner-large"></div>
+                <p className="auth-loading-text">Signing you in...</p>
+              </div>
+            </div>
+          )}
+
           <div className="auth-link">
             Don't have an account? <Link to="/signup">Sign up</Link>
           </div>

@@ -124,6 +124,16 @@ const Signup = () => {
             Create Account
           </Button>
 
+          {/* Loading Overlay for Extra Visibility */}
+          {loading && (
+            <div className="auth-loading-overlay">
+              <div className="auth-loading-content">
+                <div className="auth-loading-spinner-large"></div>
+                <p className="auth-loading-text">Creating your account...</p>
+              </div>
+            </div>
+          )}
+
           <div className="auth-link">
             Already have an account? <Link to="/login">Sign in</Link>
           </div>
