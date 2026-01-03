@@ -37,12 +37,18 @@ const createUsersTable = async () => {
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         role VARCHAR(50) NOT NULL CHECK (role IN ('student', 'teacher')),
-        reset_token VARCHAR(255),
-        reset_token_expiry TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     console.log('Users table created successfully');
+    
+    // Add reset token columns if they don't exist
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP
+    `);
+    console.log('Reset token columns ensured');
   } catch (error) {
     console.error('Error creating users table:', error);
     process.exit(1);
