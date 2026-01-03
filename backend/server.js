@@ -71,7 +71,7 @@ const sendPasswordResetEmail = async (email, resetLink) => {
       });
       
       console.log(`✅ Password reset email SENT to ${email} via Resend`);
-      console.log(`📧 Resend ID: ${result.data?.id}`);
+      console.log(`📧 Resend ID: ${result.data?.id || result.id || 'success'}`);
       return;
     } catch (error) {
       console.error('❌ Resend failed:', error.message);
