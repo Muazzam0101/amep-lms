@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Production Email Service with Resend + SMTP fallback
 const sendPasswordResetEmail = async (email, resetLink) => {
-  const emailFrom = process.env.EMAIL_FROM || 'NeuroLearn <noreply@neurolearn.com>';
+  const emailFrom = 'NeuroLearn <noreply@neurolearn.app>';
   
   const emailContent = {
     subject: 'Reset Your NeuroLearn Password',
@@ -75,51 +75,16 @@ const sendPasswordResetEmail = async (email, resetLink) => {
       return;
     } catch (error) {
       console.error('❌ Resend failed:', error.message);
-      console.log('🔄 Falling back to SMTP...');
     }
   }
 
-  // Fallback to SMTP (Gmail)
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('❌ No email service configured (missing RESEND_API_KEY and SMTP credentials)');
-    console.log(`Reset link (NO EMAIL SENT): ${resetLink}`);
-    throw new Error('Email service not configured');
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    
-    // Verify SMTP connection
-    await transporter.verify();
-    console.log('✅ SMTP connection verified');
-    
-    const result = await transporter.sendMail({
-      from: emailFrom,
-      to: email,
-      subject: emailContent.subject,
-      html: emailContent.html
-    });
-    
-    console.log(`✅ Password reset email SENT to ${email} via SMTP`);
-    console.log(`📧 Message ID: ${result.messageId}`);
-    
-  } catch (error) {
-    console.error('❌ SMTP email sending FAILED:');
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error response:', error.response);
-    
-    console.log(`Reset link (EMAIL FAILED): ${resetLink}`);
-    throw new Error(`Email delivery failed: ${error.message}`);
-  }
+  // Skip SMTP in production due to timeout issues
+  console.error('❌ No reliable email service configured');
+  console.log(`🔗 Reset link (manual): ${resetLink}`);
+  console.log('📝 Configure RESEND_API_KEY for email delivery');
+  
+  // Don't throw error - log the link for manual testing
+  return;
 };
 
 // Signup route
@@ -236,13 +201,18 @@ app.post('/api/forgot-password', async (req, res) => {
       );
 
       // Generate reset link with PRODUCTION frontend URL
-      const frontendUrl = process.env.FRONTEND_URL || 'https://neurolearn-frontend.vercel.app';
+      const frontendUrl = 'https://neurolearn-frontend.vercel.app';
       const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
       
       console.log(`🔗 Reset link: ${resetLink}`);
       
-      // Send email with reset link - HARD FAIL if email fails
-      await sendPasswordResetEmail(email, resetLink);
+      // Send email with reset link - Don't fail the request if email fails
+      try {
+        await sendPasswordResetEmail(email, resetLink);
+      } catch (emailError) {
+        console.error('❌ Email delivery failed, but continuing for security:', emailError.message);
+        // Don't expose email failures to client for security
+      }
     }
 
     // Always return success (security: don't reveal if email exists)
