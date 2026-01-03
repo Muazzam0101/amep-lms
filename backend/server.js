@@ -3,6 +3,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const pool = require('./db');
 require('dotenv').config();
 
@@ -12,20 +13,55 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Email service placeholder - replace with actual email service
+// Real SMTP Email Service
+const createEmailTransporter = () => {
+  return nodemailer.createTransporter({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+};
+
 const sendPasswordResetEmail = async (email, resetLink) => {
-  // TODO: Implement actual email service
-  // Example integrations:
-  // - SendGrid: https://sendgrid.com/
-  // - Nodemailer: https://nodemailer.com/
-  // - AWS SES: https://aws.amazon.com/ses/
-  
-  console.log(`📧 EMAIL SERVICE: Sending reset email to ${email}`);
-  console.log(`Subject: Reset Your NeuroLearn Password`);
-  console.log(`Reset Link: ${resetLink}`);
-  
-  // Simulate email sending delay
-  return new Promise(resolve => setTimeout(resolve, 100));
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log('⚠️ Email credentials not configured, logging reset link:');
+    console.log(`Reset link: ${resetLink}`);
+    return;
+  }
+
+  try {
+    const transporter = createEmailTransporter();
+    
+    const mailOptions = {
+      from: `"NeuroLearn" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Reset Your NeuroLearn Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #06b6d4;">Reset Your Password</h2>
+          <p>You requested a password reset for your NeuroLearn account.</p>
+          <p>Click the button below to reset your password:</p>
+          <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #06b6d4, #8b5cf6); color: white; text-decoration: none; border-radius: 8px; margin: 20px 0;">Reset Password</a>
+          <p>Or copy and paste this link: <a href="${resetLink}">${resetLink}</a></p>
+          <p><strong>This link will expire in 30 minutes.</strong></p>
+          <p>If you didn't request this reset, please ignore this email.</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 12px;">NeuroLearn - Adaptive Learning Platform</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to: ${email}`);
+  } catch (error) {
+    console.error('❌ Email sending failed:', error.message);
+    // Fallback to logging
+    console.log(`Reset link: ${resetLink}`);
+  }
 };
 
 // Signup route
@@ -141,15 +177,12 @@ app.post('/api/forgot-password', async (req, res) => {
         [hashedToken, tokenExpiry, email]
       );
 
-      // Generate reset link
-      const frontendUrl = process.env.FRONTEND_URL || 'https://neurolearn-frontend.vercel.app';
+      // Generate reset link with correct frontend URL
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
       
-      // TODO: Replace with actual email service (SendGrid, Nodemailer, etc.)
+      // Send email with reset link
       await sendPasswordResetEmail(email, resetLink);
-      
-      console.log(`📧 Password reset email would be sent to: ${email}`);
-      console.log(`Reset link: ${resetLink}`);
     }
 
     // Always return success (security: don't reveal if email exists)
@@ -169,7 +202,7 @@ app.post('/api/validate-reset-token', async (req, res) => {
       return res.status(400).json({ message: 'Token is required' });
     }
 
-    // Hash the provided token
+    // Hash the provided token (don't log the actual token)
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     // Check if token exists and is not expired
@@ -184,7 +217,7 @@ app.post('/api/validate-reset-token', async (req, res) => {
 
     res.json({ message: 'Token is valid' });
   } catch (error) {
-    console.error('Validate token error:', error);
+    console.error('Validate token error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -202,7 +235,7 @@ app.post('/api/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    // Hash the provided token
+    // Hash the provided token (don't log the actual token)
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     // Check if token exists and is not expired
@@ -219,15 +252,16 @@ app.post('/api/reset-password', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    // Update password and clear reset token
+    // Update password and clear reset token (single-use)
     await pool.query(
       'UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2',
       [hashedPassword, user.rows[0].id]
     );
 
+    console.log(`✅ Password reset completed for user ID: ${user.rows[0].id}`);
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('Reset password error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
