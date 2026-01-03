@@ -4,7 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
-import { resetPassword, validateResetToken } from '../../services/api';
+import { validateResetToken, resetPassword } from '../../services/api';
 import './Auth.css';
 
 const ResetPassword = () => {
@@ -44,22 +44,17 @@ const ResetPassword = () => {
     setFormData({ ...formData, [field]: e.target.value });
   };
 
-  const validateForm = () => {
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
     
     setLoading(true);
 
@@ -82,9 +77,7 @@ const ResetPassword = () => {
       <div className="auth-container page-fade-in">
         <div className="auth-illustration">
           <Logo size="large" className="auth-brand-logo" />
-          <div className="auth-tagline">
-            Validating reset link...
-          </div>
+          <div className="auth-tagline">Validating reset link...</div>
         </div>
         
         <div className="auth-form-section">
@@ -92,7 +85,7 @@ const ResetPassword = () => {
             <div className="auth-loading-overlay">
               <div className="auth-loading-content">
                 <div className="auth-loading-spinner-large"></div>
-                <p className="auth-loading-text">Validating reset link...</p>
+                <p className="auth-loading-text">Validating...</p>
               </div>
             </div>
           </div>
@@ -108,9 +101,7 @@ const ResetPassword = () => {
         
         <div className="auth-illustration">
           <Logo size="large" className="auth-brand-logo" />
-          <div className="auth-tagline">
-            Invalid reset link
-          </div>
+          <div className="auth-tagline">Invalid reset link</div>
         </div>
         
         <div className="auth-form-section">
@@ -119,31 +110,18 @@ const ResetPassword = () => {
               <Logo size="medium" />
               <h1 className="auth-title">Invalid Link</h1>
               <p className="auth-subtitle">
-                This password reset link is invalid or has expired.
+                This reset link is invalid or has expired.
               </p>
             </div>
 
-            <div className="reset-error-content">
-              <div className="reset-error-icon">⚠️</div>
-              <p className="reset-error-text">
-                The reset link may have expired or been used already.
-              </p>
+            <div className="reset-error">
+              <div className="reset-icon">⚠️</div>
+              <p>The reset link may have expired or been used already.</p>
             </div>
 
-            <div className="auth-actions">
-              <button 
-                className="btn glass-button primary"
-                onClick={() => navigate('/forgot-password')}
-              >
-                Request New Link
-              </button>
-              <button 
-                className="btn-link"
-                onClick={() => navigate('/login')}
-              >
-                Back to Login
-              </button>
-            </div>
+            <Button onClick={() => navigate('/forgot-password')}>
+              Request New Link
+            </Button>
           </div>
         </div>
       </div>
@@ -156,9 +134,7 @@ const ResetPassword = () => {
       
       <div className="auth-illustration">
         <Logo size="large" className="auth-brand-logo" />
-        <div className="auth-tagline">
-          Create your new password
-        </div>
+        <div className="auth-tagline">Create your new password</div>
       </div>
       
       <div className="auth-form-section">
@@ -166,9 +142,7 @@ const ResetPassword = () => {
           <div className="auth-header">
             <Logo size="medium" />
             <h1 className="auth-title">Reset Password</h1>
-            <p className="auth-subtitle">
-              Enter your new password below
-            </p>
+            <p className="auth-subtitle">Enter your new password</p>
           </div>
 
           <InputField
@@ -195,7 +169,6 @@ const ResetPassword = () => {
             Update Password
           </Button>
 
-          {/* Loading Overlay */}
           {loading && (
             <div className="auth-loading-overlay">
               <div className="auth-loading-content">

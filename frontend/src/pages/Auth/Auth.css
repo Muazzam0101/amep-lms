@@ -428,6 +428,41 @@
 
 .forgot-password-link a:hover {
   color: var(--accent-primary);
+}
+
+/* Reset Success/Error States */
+.reset-success,
+.reset-error {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.reset-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-lg);
+}
+
+.reset-success p,
+.reset-error p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+/* Forgot Password Link */
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: var(--space-lg);
+}
+
+.forgot-password-link a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+
+.forgot-password-link a:hover {
+  color: var(--accent-primary);
   text-shadow: 0 0 4px rgba(6, 182, 212, 0.3);
 }
 

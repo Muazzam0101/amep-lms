@@ -25,11 +25,9 @@ const ForgotPassword = () => {
     try {
       await requestPasswordReset(email);
       setSubmitted(true);
-      toast.success('If this email exists, a reset link has been sent.');
     } catch (error) {
-      // Don't reveal if email exists or not
+      // Always show success message for security
       setSubmitted(true);
-      toast.success('If this email exists, a reset link has been sent.');
     } finally {
       setLoading(false);
     }
@@ -53,31 +51,18 @@ const ForgotPassword = () => {
               <Logo size="medium" />
               <h1 className="auth-title">Check Your Email</h1>
               <p className="auth-subtitle">
-                If an account with that email exists, we've sent you a password reset link.
+                If this email exists, a reset link has been sent.
               </p>
             </div>
 
-            <div className="reset-success-content">
-              <div className="reset-success-icon">📧</div>
-              <p className="reset-success-text">
-                Please check your email and click the reset link to continue.
-              </p>
-              <p className="reset-success-note">
-                Didn't receive an email? Check your spam folder or try again.
-              </p>
+            <div className="reset-success">
+              <div className="reset-icon">📧</div>
+              <p>Please check your email and click the reset link to continue.</p>
             </div>
 
-            <div className="auth-actions">
-              <Link to="/login" className="btn-link">
-                Back to Login
-              </Link>
-              <button 
-                className="btn-link secondary"
-                onClick={() => setSubmitted(false)}
-              >
-                Try Different Email
-              </button>
-            </div>
+            <Link to="/login" className="btn glass-button primary">
+              Back to Login
+            </Link>
           </div>
         </div>
       </div>
@@ -101,7 +86,7 @@ const ForgotPassword = () => {
             <Logo size="medium" />
             <h1 className="auth-title">Forgot Password?</h1>
             <p className="auth-subtitle">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email to receive a reset link
             </p>
           </div>
 
@@ -119,7 +104,6 @@ const ForgotPassword = () => {
             Send Reset Link
           </Button>
 
-          {/* Loading Overlay */}
           {loading && (
             <div className="auth-loading-overlay">
               <div className="auth-loading-content">
